@@ -22,7 +22,6 @@ def list_image(dir_path):
     return [os.path.join(dir_path, file) for file in ['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg',]]
 
 
-
 # read images
 def input_data(imagePath):
     # return data.imread(imagePath,as_gray=True)
@@ -67,18 +66,19 @@ def findCircles(image):
 
     circles = []
     crosses = []
+    fields = []
     f = 0
     for i, k in enumerate(contours):
        # if circleDetectionByCompactness(k) and cv2.contourArea(k) > 100:
         if cv2.contourArea(k) > 50:
             circles.append(k)
-        cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
         # f = 1 - f
 
-    circles, crosses = removeProteus(circles)
+    circles, crosses, fields = removeProteus(circles)
 
    # printWorkflow(image)
-    return image, circles, crosses
+    return image, circles, crosses, fields
 
 
 def circleDetectionByCompactness(contour):
@@ -127,7 +127,7 @@ def removeProteus(conturs):
 
     circles = []
     crosses = []
-
+    fields = []
     for c in conturs:
         area = cv2.contourArea(c)
         hull = cv2.convexHull(c)
@@ -135,13 +135,16 @@ def removeProteus(conturs):
         solidity = float(area)/hull_area
         print(solidity)
         if solidity > 0.8 and solidity < 1:
-           # if abs(area - median) < 0.5 * median:
-            circles.append(c)
-        elif solidity > 0.16 and solidity <= 0.35:
-            if area < 2*sum(areas) / areas.size:
+            if abs(area - median) < 0.5 * median:
+                circles.append(c)
+        elif solidity > 0.25:  # and solidity <= 0.5:
+            # and  area > 2*sum(areas) / areas.size:
+            if area < 1.2*sum(areas) / areas.size:
                 crosses.append(c)
+            else:
+                fields.append(c)
 
-    return circles, crosses
+    return circles, crosses, fields
 
 
 def findGroups(circles, image, cntColor):
@@ -279,18 +282,20 @@ if __name__ == "__main__":
 
         imgTmp = image.copy()
         image = cv2.resize(
-         image, (int(image.shape[1]/4), int(image.shape[0]/4)))
-        image, circles, crosses = findCircles(image)
+            image, (int(image.shape[1]/4), int(image.shape[0]/4)))
+        image, circles, crosses, fields = findCircles(image)
 
         # print(len(circles))
 
         image = findGroups(circles, image, (0, 0, 128))
         image = findGroups(crosses, image, (256, 0, 0))
+        image = findGroups(fields, image, (256, 256, 0))
+
         # image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
         plt.axis("off")
-    # plt.savefig("kosci.pdf", bbox_inches="tight")
-        plt.show()
+        plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
+        #plt.show()
 
 
 # kod w ktorym wykorzystuje momenty
