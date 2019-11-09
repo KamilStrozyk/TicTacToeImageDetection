@@ -41,7 +41,10 @@ def reduction_of_color(image):
     image_recolored = new_colors.reshape(image.shape)
 
     return image_recolored
-
+def gamma_correction(img, correction):
+    img = img/255.0
+    img = cv2.pow(img, correction)
+    return np.uint8(img*255)
 
 def findCircles(image):
     # workFlow = reduction_of_color(image)
@@ -52,12 +55,18 @@ def findCircles(image):
     # ret, workFlow = cv2.threshold(workFlow, 150, 255, cv2.THRESH_BINARY)
 
     workFlow = reduction_of_color(image)
+    #printWorkflow(workFlow)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #printWorkflow(workFlow)
+
+
     ret, workFlow = cv2.threshold(
         workFlow, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    #printWorkflow(workFlow)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     cv2.morphologyEx(workFlow, cv2.MORPH_CLOSE, kernel)
-    # printWorkflow(workFlow)
+    #printWorkflow(workFlow)
+    # #printWorkflow(workFlow)
     # im2,
    # for i in range(0,5):
     #  workFlow = mp.erosion(workFlow)
@@ -77,7 +86,7 @@ def findCircles(image):
 
     circles, crosses, fields = removeProteus(circles)
 
-   # printWorkflow(image)
+   # #printWorkflow(image)
     return image, circles, crosses, fields
 
 
@@ -294,8 +303,8 @@ if __name__ == "__main__":
         # image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
         plt.axis("off")
-        plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
-        #plt.show()
+        #plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
+        plt.show()
 
 
 # kod w ktorym wykorzystuje momenty
