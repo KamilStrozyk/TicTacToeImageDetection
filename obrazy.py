@@ -265,6 +265,57 @@ def printWorkflow(workFlow):
     io.imshow(workFlow)
     plt.show()
 
+#MJ
+def MJfindGroups(image):
+    printWorkflow(image)
+    workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    workFlow = workFlow*255
+    workFlow = workFlow.astype(np.uint8)
+    ret, workFlow = cv2.threshold(workFlow, 120, 255, cv2.THRESH_BINARY)
+    # Taking a matrix of size 5 as the kernel
+    kern = np.ones((5, 5), np.uint8)
+
+    workFlow = cv2.dilate(workFlow, kern, iterations=5)
+    contours, hierarchy = cv2.findContours(workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    #print('KSZTALTOW: ' + str(len(contours)))
+    for i, k in enumerate(contours):
+        cv2.drawContours(image, k, -1, (0, 150, 0), 2)
+
+    coordinate = boardArea(contours, (300, 300))
+    partList = imagePart(image, coordinate)
+
+    return partList
+#MJ
+def imagePart(image, coordinates):
+    partList = []
+    for coord in coordinates:
+        print(coord)
+        partList.append(image[coord[2]: coord[3],coord[0]: coord[1]] )
+    return partList
+
+#MJ
+#[[],[],[]...], [x,y]
+def boardArea(contours, size):
+    contoursNode = []
+
+    for con in contours:
+        lewo = size[0]
+        prawo = 0
+        gora = 0
+        dol = size[1]
+        for pixel in con:
+            p = pixel[0]
+            if(p[0] > prawo):
+                prawo = p[0]
+            if(p[0] < lewo):
+                lewo = p[0]
+            if(p[1] > gora ):
+                gora = p[1]
+            if(p[1] < dol):
+                dol = p[1]
+        contoursNode.append((lewo, prawo, dol, gora))
+    return contoursNode
+
 
 if __name__ == "__main__":
     plt.figure(figsize=(20, 10))
