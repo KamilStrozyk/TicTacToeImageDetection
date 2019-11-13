@@ -46,7 +46,7 @@ def gamma_correction(img, correction):
     img = cv2.pow(img, correction)
     return np.uint8(img*255)
 
-def findCircles(image):
+def findShapes(image):
     # workFlow = reduction_of_color(image)
     # workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # workFlow = cv2.GaussianBlur(workFlow, (9, 9), 0)
@@ -284,7 +284,7 @@ def printWorkflow(workFlow):
 
 #MJ
 def MJfindGroups(image):
-    printWorkflow(image)
+    #printWorkflow(image)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     workFlow = workFlow*255
     workFlow = workFlow.astype(np.uint8)
@@ -343,13 +343,17 @@ if __name__ == "__main__":
         imgTmp = image.copy()
         image = cv2.resize(
             image, (int(image.shape[1]/4), int(image.shape[0]/4)))
-        image, circles, crosses, fields = findCircles(image)
+        image, circles, crosses, fields = findShapes(image)
 
         # print(len(circles))
+        for i in MJfindGroups(image):
+            i, circles, crosses, fields = findShapes(i)
+            i = findGroups(circles, i, (0, 0, 128))
+            i = findGroups(crosses, i, (256, 0, 0))
+            i = findGroups(fields, i, (256, 256, 0))
+            plt.imshow(i, cmap="Greys_r")
+            #plt.show()
 
-        image = findGroups(circles, image, (0, 0, 128))
-        image = findGroups(crosses, image, (256, 0, 0))
-        image = findGroups(fields, image, (256, 256, 0))
 
         # image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
