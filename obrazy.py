@@ -18,7 +18,8 @@ dir_path = ''
 
 # path to images
 def list_image(dir_path):
-    return [os.path.join(dir_path, file) for file in ['11.jpg']]
+    #return [os.path.join(dir_path, file) for file in ['1.jpg']]
+    return [os.path.join(dir_path, file) for file in ['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg',]]
 
 
 # read images
@@ -40,9 +41,12 @@ def reduction_of_color(image):
     image_recolored = new_colors.reshape(image.shape)
 
     return image_recolored
+def gamma_correction(img, correction):
+    img = img/255.0
+    img = cv2.pow(img, correction)
+    return np.uint8(img*255)
 
-
-def findCircles(image):
+def findShapes(image):
     # workFlow = reduction_of_color(image)
     # workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # workFlow = cv2.GaussianBlur(workFlow, (9, 9), 0)
@@ -51,12 +55,18 @@ def findCircles(image):
     # ret, workFlow = cv2.threshold(workFlow, 150, 255, cv2.THRESH_BINARY)
 
     workFlow = reduction_of_color(image)
+    #printWorkflow(workFlow)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #printWorkflow(workFlow)
+
+
     ret, workFlow = cv2.threshold(
         workFlow, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    #printWorkflow(workFlow)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     cv2.morphologyEx(workFlow, cv2.MORPH_CLOSE, kernel)
-    # printWorkflow(workFlow)
+    #printWorkflow(workFlow)
+    # #printWorkflow(workFlow)
     # im2,
    # for i in range(0,5):
     #  workFlow = mp.erosion(workFlow)
@@ -64,18 +74,20 @@ def findCircles(image):
         workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     circles = []
+    crosses = []
+    fields = []
     f = 0
-    for i, k in enumerate(contours):       
+    for i, k in enumerate(contours):
        # if circleDetectionByCompactness(k) and cv2.contourArea(k) > 100:
-        if  cv2.contourArea(k) > 100:
+        if cv2.contourArea(k) > 50:
             circles.append(k)
-        cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
         # f = 1 - f
 
-    circles = removeProteus(circles)
+    circles, crosses, fields = removeProteus(circles)
 
-   # printWorkflow(image)
-    return image, circles
+   # #printWorkflow(image)
+    return image, circles, crosses, fields
 
 
 def circleDetectionByCompactness(contour):
@@ -122,51 +134,56 @@ def removeProteus(conturs):
 
     median = np.median(areas)
 
-    cnt = []
+    circles = []
+    crosses = []
+    fields = []
     for c in conturs:
         area = cv2.contourArea(c)
-       # if abs(area - median) < 0.5 * median:
-        cnt.append(c)
+        hull = cv2.convexHull(c)
+        hull_area = cv2.contourArea(hull)
+        solidity = float(area)/hull_area
+        print(solidity)
+        if solidity > 0.8 and solidity < 1:
+            if abs(area - median) < 0.5 * median:
+                circles.append(c)
+        elif solidity > 0.25:  # and solidity <= 0.5:
+            # and  area > 2*sum(areas) / areas.size:
+            if area < 1.2*sum(areas) / areas.size:
+                crosses.append(c)
+            else:
+                fields.append(c)
 
-    return cnt
+    return circles, crosses, fields
 
 
-def findGroups(circles, image):
+def findGroups(circles, image, cntColor):
     ones = []
-    twos = []
-    threes = []
-    fours = []
-    fives = []
-    sixes = []
-
     centroids = []
-    for i, cnt in enumerate(circles):
-        moments = cv2.moments(cnt)
+    for i, circles in enumerate(circles):
+        moments = cv2.moments(circles)
         centerX = int(moments['m10'] / moments['m00'])
         centerY = int(moments['m01'] / moments['m00'])
 
         element = {}
         element['id'] = i
         element['centroid'] = [centerX, centerY]
-        element['area'] = cv2.contourArea(cnt)
-        element['radius'] = getRadius(cnt, [centerX, centerY])
-        element['contour'] = cnt
+        element['area'] = cv2.contourArea(circles)
+        element['radius'] = getRadius(circles, [centerX, centerY])
+        element['contour'] = circles
         centroids.append(element)
 
     # print(centroids)
 
     for c in centroids:
-        neigbours = findNeighbours(c, centroids)
-        if len(neigbours) == 0:
-            ones.append(c)
-            cv2.drawContours(image, [c['contour']], 0, (0, 1, 0), 2)
+        ones.append(c)
+        cv2.drawContours(image, [c['contour']], 0, cntColor, 2)
 
-        # finding the closest neighbour:
-        else:
-            min = getCentroidsDistance(c['centroid'], neigbours[0]['centroid'])
-            for n in neigbours:
-                if min > getCentroidsDistance(c['centroid'], n['centroid']):
-                    min = getCentroidsDistance(c['centroid'], n['centroid'])
+        # # finding the closest neighbour:
+        # else:
+        #     min = getCentroidsDistance(c['centroid'], neigbours[0]['centroid'])
+        #     for n in neigbours:
+        #         if min > getCentroidsDistance(c['centroid'], n['centroid']):
+        #             min = getCentroidsDistance(c['centroid'], n['centroid'])
 
         # elif len(neigbours) == 1:
         #     twos.append(c)
@@ -178,12 +195,12 @@ def findGroups(circles, image):
     return image
 
 
-def findNeighbours(cnt, cntList):
+def findNeighbours(circles, circlesList):
     neighbours = []
-    for c in cntList:
-        distance = getCentroidsDistance(c['centroid'], cnt['centroid'])
+    for c in circlesList:
+        distance = getCentroidsDistance(c['centroid'], circles['centroid'])
         # print(distance)
-        if 5*cnt['radius'] > distance > 1:
+        if 5*circles['radius'] > distance > 1:
             # print(distance)
             neighbours.append(c)
 
@@ -194,9 +211,9 @@ def getCentroidsDistance(a, b):
     return dist.euclidean((a[0], a[1]), (b[0], b[1]))
 
 
-def getRadius(cnt, cetroid):
+def getRadius(circles, cetroid):
     distances = []
-    for i in cnt:
+    for i in circles:
         pointX = i[0][0]
         pointY = i[0][1]
 
@@ -210,15 +227,15 @@ def dbscan(circles, image):
     centroids = []
     distances = []
     # print(len(circles))
-    for i, cnt in enumerate(circles):
-        moments = cv2.moments(cnt)
+    for i, circles in enumerate(circles):
+        moments = cv2.moments(circles)
         if moments['m00']:
-            moments = cv2.moments(cnt)
+            moments = cv2.moments(circles)
             centerX = int(moments['m10'] / moments['m00'])
             centerY = int(moments['m01'] / moments['m00'])
-            distances.append(getRadius(cnt, [centerX, centerY]))
+            distances.append(getRadius(circles, [centerX, centerY]))
             centroids.append([centerX, centerY])
-            cv2.drawContours(image, [cnt], 0, (255, 0, 0), 1)
+            cv2.drawContours(image, [circles], 0, (125, 25, 25), 1)
 
     meanRadius = np.mean(distances)
     # print(len(centroids))
@@ -265,6 +282,57 @@ def printWorkflow(workFlow):
     io.imshow(workFlow)
     plt.show()
 
+#MJ
+def MJfindGroups(image):
+    #printWorkflow(image)
+    workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    workFlow = workFlow*255
+    workFlow = workFlow.astype(np.uint8)
+    ret, workFlow = cv2.threshold(workFlow, 120, 255, cv2.THRESH_BINARY)
+    # Taking a matrix of size 5 as the kernel
+    kern = np.ones((5, 5), np.uint8)
+
+    workFlow = cv2.dilate(workFlow, kern, iterations=5)
+    contours, hierarchy = cv2.findContours(workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    #print('KSZTALTOW: ' + str(len(contours)))
+    for i, k in enumerate(contours):
+        cv2.drawContours(image, k, -1, (0, 150, 0), 2)
+
+    coordinate = boardArea(contours, (300, 300))
+    partList = imagePart(image, coordinate)
+
+    return partList
+#MJ
+def imagePart(image, coordinates):
+    partList = []
+    for coord in coordinates:
+        print(coord)
+        partList.append(image[coord[2]: coord[3],coord[0]: coord[1]] )
+    return partList
+
+#MJ
+#[[],[],[]...], [x,y]
+def boardArea(contours, size):
+    contoursNode = []
+
+    for con in contours:
+        lewo = size[0]
+        prawo = 0
+        gora = 0
+        dol = size[1]
+        for pixel in con:
+            p = pixel[0]
+            if(p[0] > prawo):
+                prawo = p[0]
+            if(p[0] < lewo):
+                lewo = p[0]
+            if(p[1] > gora ):
+                gora = p[1]
+            if(p[1] < dol):
+                dol = p[1]
+        contoursNode.append((lewo, prawo, dol, gora))
+    return contoursNode
+
 
 if __name__ == "__main__":
     plt.figure(figsize=(20, 10))
@@ -275,16 +343,23 @@ if __name__ == "__main__":
         imgTmp = image.copy()
         image = cv2.resize(
             image, (int(image.shape[1]/4), int(image.shape[0]/4)))
-        image, circles = findCircles(image)
+        image, circles, crosses, fields = findShapes(image)
 
         # print(len(circles))
+        for i in MJfindGroups(image):
+            i, circles, crosses, fields = findShapes(i)
+            i = findGroups(circles, i, (0, 0, 128))
+            i = findGroups(crosses, i, (256, 0, 0))
+            i = findGroups(fields, i, (256, 256, 0))
+            plt.imshow(i, cmap="Greys_r")
+            #plt.show()
 
-        image = findGroups(circles, image)
-        image = dbscan(circles, image)
+
+        # image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
         plt.axis("off")
-    # plt.savefig("kosci.pdf", bbox_inches="tight")
-    plt.show()
+        #plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
+        plt.show()
 
 
 # kod w ktorym wykorzystuje momenty
