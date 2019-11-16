@@ -13,13 +13,19 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import StandardScaler
 import skimage.morphology as mp
 
-dir_path = ''
+dir_path = 'photo/'
 
+#Do wyrzucenia: 31, 40, 41, 51, 58, 60, 61
+#TRUDNE PRZYDPAKI: 11, 21, 23, 24
 
 # path to images
 def list_image(dir_path):
+    photoList = []
+    for i in range(1, 62):
+        photoList.append(str(i) + '.jpg')
+    #print(photoList)
     #return [os.path.join(dir_path, file) for file in ['1.jpg']]
-    return [os.path.join(dir_path, file) for file in ['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg',]]
+    return [os.path.join(dir_path, file) for file in photoList]
 
 
 # read images
@@ -142,7 +148,8 @@ def removeProteus(conturs):
         hull = cv2.convexHull(c)
         hull_area = cv2.contourArea(hull)
         solidity = float(area)/hull_area
-        print(solidity)
+        #
+        #print(solidity)
         if solidity > 0.8 and solidity < 1:
             if abs(area - median) < 0.5 * median:
                 circles.append(c)
@@ -247,7 +254,7 @@ def dbscan(circles, image):
     merged = list(zip(centroids, labels))
 
     groups = []
-    print(cubes)
+    #print(cubes)
 
     for i in range(cubes):
         group = []
@@ -284,31 +291,46 @@ def printWorkflow(workFlow):
 
 #MJ
 def MJfindGroups(image):
-    #printWorkflow(image)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     workFlow = workFlow*255
     workFlow = workFlow.astype(np.uint8)
-    ret, workFlow = cv2.threshold(workFlow, 120, 255, cv2.THRESH_BINARY)
+    ret, workFlow = cv2.threshold(workFlow, 160, 255, cv2.THRESH_BINARY)
+    #printWorkflow(workFlow)
     # Taking a matrix of size 5 as the kernel
-    kern = np.ones((5, 5), np.uint8)
+    kX = 6
+    kY = 6
+    if len(image[0]) < len(image):
+        kX = 9
+    else:
+        kY = 9
+    kern = np.ones((kX, kY), np.uint8)
 
-    workFlow = cv2.dilate(workFlow, kern, iterations=5)
+    workFlow = cv2.dilate(workFlow, kern, iterations=9)
+    #printWorkflow(workFlow)
     contours, hierarchy = cv2.findContours(workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    #print('KSZTALTOW: ' + str(len(contours)))
-    for i, k in enumerate(contours):
-        cv2.drawContours(image, k, -1, (0, 150, 0), 2)
-    #print('LEN: ' + str(len(image[0])) + ' ' + str(len(image)))
+    #for i, k in enumerate(contours):
+    #    cv2.drawContours(image, k, -1, (0, 150, 0), 2)
+
     coordinate = boardArea(contours, (len(image[0]), len(image)))
 
-    partList = imagePart(image, coordinate)
+    partList = imagePart(image, coordinate) #zabieramy tylko większe obszary
 
     return partList
 #MJ
 def imagePart(image, coordinates):
     partList = []
     for coord in coordinates:
-        print(coord)
-        partList.append(image[coord[2]: coord[3],coord[0]: coord[1]] )
+        if abs(coord[3]-coord[2]) > 40 and abs(coord[1] - coord[0]) > 40:
+            partList.append(image[coord[2]: coord[3],coord[0]: coord[1]] )
+
+    plt.imshow(image, cmap="Greys_r")
+    plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
+    j =0
+    for item in partList:
+        #printWorkflow(item)
+        plt.imshow(item, cmap="Greys_r")
+        plt.savefig("pho/test" +str(i+1)  + "sub" + str(j) + ".jpg", bbox_inches="tight")
+        j = j + 1
     return partList
 
 #MJ
@@ -344,20 +366,24 @@ if __name__ == "__main__":
         imgTmp = image.copy()
         image = cv2.resize(
             image, (int(image.shape[1]/4), int(image.shape[0]/4)))
-        image, circles, crosses, fields = findShapes(image)
+
+        MJfindGroups(image) #Najpierw ta funkcja!
+
+        #image, circles, crosses, fields = findShapes(image)
+
 
         # print(len(circles))
-        for i in MJfindGroups(image):
-            i, circles, crosses, fields = findShapes(i)
-            i = findGroups(circles, i, (0, 0, 128))
-            i = findGroups(crosses, i, (256, 0, 0))
-            i = findGroups(fields, i, (256, 256, 0))
-            plt.imshow(i, cmap="Greys_r")
+        #for j in MJfindGroups(image):
+            #i, circles, crosses, fields = findShapes(j)
+            #j = findGroups(circles, j, (0, 0, 128))
+            #j = findGroups(crosses, j, (256, 0, 0))
+            #j = findGroups(fields, j, (256, 256, 0))
+         #   plt.imshow(j, cmap="Greys_r")
             #plt.show()
 
-
         # image = dbscan(circles, image)
-        plt.imshow(image, cmap="Greys_r")
-        plt.axis("off")
+        #plt.imshow(image, cmap="Greys_r")
+        #plt.imshow(image, cmap="Greys_r")
+        #plt.axis("off")
         #plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
-        plt.show()
+        #plt.show()
