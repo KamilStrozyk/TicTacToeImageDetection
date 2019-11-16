@@ -297,8 +297,9 @@ def MJfindGroups(image):
     #print('KSZTALTOW: ' + str(len(contours)))
     for i, k in enumerate(contours):
         cv2.drawContours(image, k, -1, (0, 150, 0), 2)
+    #print('LEN: ' + str(len(image[0])) + ' ' + str(len(image)))
+    coordinate = boardArea(contours, (len(image[0]), len(image)))
 
-    coordinate = boardArea(contours, (300, 300))
     partList = imagePart(image, coordinate)
 
     return partList
@@ -360,54 +361,3 @@ if __name__ == "__main__":
         plt.axis("off")
         #plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
         plt.show()
-
-
-# kod w ktorym wykorzystuje momenty
-
-    # for i, k in enumerate(circles):
-    #     moments = cv2.moments(k)
-    #
-    #     if not moments['m00']:
-    #         continue
-    #
-    #     centerX = int(moments['m10']/moments['m00'])
-    #     centerY = int(moments['m01']/moments['m00'])
-    #
-    #     # if circleDetectionByCompactness(k) and cv2.contourArea(k) > 50:
-    #     cv2.drawContours(image, [k], 0, np.asarray(colorsys.hsv_to_rgb(i / len(contours), 1, 1)), 1)
-
-    #
-    # if circleDetection(centerX, centerY, k) and cv2.contourArea(k) > 50:
-    #     print((cv2.contourArea(k)))
-    #     cv2.drawContours(image, [k], 0, np.asarray(colorsys.hsv_to_rgb(i / len(contours), 1, 1)), 1)
-
-    # if moments['m00']:
-    #     cv2.circle(image, (int(moments['m10']/moments['m00']), int(moments['m01']/moments['m00'])), 2, (255, 255, 255), -10)
-
-
-# def findCirclesHough(image_recolored, mainimg):
-#     # img = cv2.medianBlur(image_recolored, 5)
-#     # img = ski.filters.gaussian(img, 2)
-#     # tmp = img * 255
-#     # img = tmp.astype(np.uint8)
-#     # kernel = np.ones((3, 3), np.uint8)
-#     # # _, img = cv2.threshold(img, 60, 60, cv2.THRESH_TRUNC)
-#     #
-#     # # return img
-#     #
-#     # # _, img = cv2.threshold(img, 20, 20, cv2.THRESH_TOZERO)
-#     #
-#     # img = cv2.erode(img, kernel, iterations=1)
-#     # img = cv2.dilate(img, kernel, iterations=2)
-#
-#     # img = cv2.subtract(255, img)
-#
-#     circles = cv2.HoughCircles(image_recolored, cv2.HOUGH_GRADIENT, 20, 15)
-#     print(circles)
-#     circles = np.uint16(np.around(circles))
-#
-#     for i in circles[0, :]:
-#         # draw the outer circle
-#         cv2.circle(mainimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
-#
-#     return mainimg
