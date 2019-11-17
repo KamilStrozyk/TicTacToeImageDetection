@@ -90,7 +90,7 @@ def findShapes(image):
     for i, k in enumerate(contours):
         if cv2.contourArea(k) > 50:
             circles.append(k)
-            cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            #cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
 
     circles, crosses, fields = detectShapes(circles)
     return circles, crosses, fields
@@ -185,8 +185,6 @@ def printWorkflow(workFlow):
     plt.show()
 
 # MJ
-
-
 def MJfindGroups(image):
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     workFlow = workFlow*255
@@ -215,8 +213,6 @@ def MJfindGroups(image):
 
     return partList
 # MJ
-
-
 def imagePart(image, coordinates):
     partList = []
     for coord in coordinates:
@@ -236,8 +232,6 @@ def imagePart(image, coordinates):
 
 # MJ
 # [[],[],[]...], [x,y]
-
-
 def boardArea(contours, size):
     contoursNode = []
 
@@ -279,6 +273,7 @@ if __name__ == "__main__":
         #print(len(circles))
         for j in MJfindGroups(image):
             circles, crosses, fields = findShapes(j)
+
             j = drawContoursOnImage(circles, j, (0, 0, 128))
             j = drawContoursOnImage(crosses, j, (256, 0, 0))
             j = drawContoursOnImage(fields, j, (256, 256, 0))
