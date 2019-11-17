@@ -224,13 +224,13 @@ def imagePart(image, coordinates):
             partList.append(image[coord[2]: coord[3], coord[0]: coord[1]])
 
     plt.imshow(image, cmap="Greys_r")
-    plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
+    #plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
     j = 0
     for item in partList:
         # printWorkflow(item)
         plt.imshow(item, cmap="Greys_r")
-        plt.savefig("pho/test" + str(i+1) + "sub" +
-                    str(j) + ".jpg", bbox_inches="tight")
+        #plt.savefig("pho/test" + str(i+1) + "sub" +
+                    #str(j) + ".jpg", bbox_inches="tight")
         j = j + 1
     return partList
 
