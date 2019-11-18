@@ -24,6 +24,7 @@ dir_path = 'photo/'
 def list_image(dir_path):
     photoList = []
     for i in range(1, 62):
+        # for i in range(1, 62):
         photoList.append(str(i) + '.jpg')
     # print(photoList)
     # return [os.path.join(dir_path, file) for file in ['1.jpg']]
@@ -74,14 +75,33 @@ def findShapes(image):
     shapes = []
 
     for i, k in enumerate(contours):
-        if cv2.contourArea(k) > 50:
+        if cv2.contourArea(k) > 100:
             shapes.append(k)
             cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
 
     circles, crosses, fields = detectShapes(shapes)
+   # printWorkflow(workFlow)
     return circles, crosses, fields
 
-   # printWorkflow(image)
+
+def prepareSamples():
+    # path = ['circle.jpg', 'cross1.jpg',
+    #         'cross2.jpg', 'field1.jpg', 'field2.jpg']
+    # sampleNames = ['circle', 'cross', 'cross', 'field', 'field']
+
+    path = ['circle.jpg', 'circle1.jpg',
+            'cross3.jpg', 'cross4.jpg', 'field2.jpg', 'field3.jpg', 'field4.jpg', ]
+    sampleNames = ['circle', 'circle',  'cross',
+                   'cross',  'field',  'field',  'field']
+    sampleContours = []
+
+    for i in range(0, len(path)):
+        img = cv2.imread('samples/'+path[i], 0)
+        ret, thresh = cv2.threshold(img, 127, 255, 0)
+        contours, hierarchy = cv2.findContours(thresh, 2, 1)
+        sampleContours.append(contours[0])
+
+    return sampleContours, sampleNames
 
 
 def detectShapes(conturs):
@@ -93,22 +113,41 @@ def detectShapes(conturs):
 
     circles = []
     crosses = []
-    fields = []
+
+    sampleContours, sampleNames = prepareSamples()
+    x = 0
     for c in conturs:
-        area = cv2.contourArea(c)
-        hull = cv2.convexHull(c)
-        hull_area = cv2.contourArea(hull)
-        solidity = float(area)/hull_area
-        # print(solidity)
-        if solidity > 0.8 and solidity < 1:
-           # if abs(area - median) < 0.5 * median:
+        # area = cv2.contourArea(c)
+        # hull = cv2.convexHull(c)
+        # hull_area = cv2.contourArea(hull)
+        # solidity = float(area)/hull_area
+        # # print(solidity)
+        # if solidity > 0.8 and solidity < 0.96:
+        #    # if abs(area - median) < 0.5 * median:
+        #     circles.append(c)
+        # elif solidity <1:#elif solidity > 0.25:  # and solidity <= 0.5:
+        #     # and  area > 2*sum(areas) / areas.size:
+        #     if area < sum(areas) / areas.size:
+        #         crosses.append(c)
+        #     else:
+        #         fields.append(c)
+        bestRet = 45
+        bestShape = "XD"
+        for i in range(0, len(sampleContours)):
+            ret = cv2.matchShapes(c, sampleContours[i], 1, 0.0)
+            if ret < bestRet:
+                bestRet = ret
+                bestShape = sampleNames[i]
+
+        print(bestRet)
+        print(bestShape)
+
+        if bestShape == 'circle':
             circles.append(c)
-        else:#elif solidity > 0.25:  # and solidity <= 0.5:
-            # and  area > 2*sum(areas) / areas.size:
-            if area < sum(areas) / areas.size:
-                crosses.append(c)
-            else:
-                fields.append(c)
+        elif bestShape == 'cross':
+            crosses.append(c)
+        elif bestShape == 'field':
+            fields.append(c)
 
     return circles, crosses, fields
 
@@ -135,6 +174,7 @@ def printWorkflow(workFlow):
     plt.figure()
     io.imshow(workFlow)
     plt.show()
+
 
 # MJ
 
@@ -236,7 +276,7 @@ if __name__ == "__main__":
             j = drawContoursOnImage(crosses, j, (256, 0, 0))
             j = drawContoursOnImage(fields, j, (256, 256, 0))
             plt.imshow(j, cmap="Greys_r")
-           # plt.show()
+            # plt.show()
 
         #image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
