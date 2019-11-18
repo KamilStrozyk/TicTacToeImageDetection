@@ -23,7 +23,7 @@ dir_path = 'photo/'
 
 def list_image(dir_path):
     photoList = []
-    for i in range(1, 62):
+    for i in range(39, 62):
         # for i in range(1, 62):
         photoList.append(str(i) + '.jpg')
     # print(photoList)
@@ -265,22 +265,23 @@ if __name__ == "__main__":
         # MJfindGroups(image)  # Najpierw ta funkcja!
 
         #image, circles, crosses, fields = findShapes(image)
-        circles = []
-        crosses = []
-        fields = []
+
         # print(len(circles))
         for j in MJfindGroups(image):
+            circles = []
+            crosses = []
+            fields = []
             circles, crosses, fields = findShapes(j)
 
             j = drawContoursOnImage(circles, j, (0, 0, 128))
             j = drawContoursOnImage(crosses, j, (256, 0, 0))
             j = drawContoursOnImage(fields, j, (256, 256, 0))
             plt.imshow(j, cmap="Greys_r")
-            # plt.show()
+        # plt.show()
 
         #image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
         plt.imshow(image, cmap="Greys_r")
         plt.axis("off")
-        #plt.savefig("tests/test"+str(i)+".jpg", bbox_inches="tight")
+        #plt.savefig("sampletest/test"+str(i)+".jpg", bbox_inches="tight")
         plt.show()
