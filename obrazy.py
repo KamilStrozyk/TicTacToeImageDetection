@@ -23,7 +23,7 @@ dir_path = 'photo/'
 
 def list_image(dir_path):
     photoList = []
-    for i in range(39, 62):
+    for i in range(25, 26):
         # for i in range(1, 62):
         photoList.append(str(i) + '.jpg')
     # print(photoList)
@@ -77,7 +77,7 @@ def findShapes(image):
     for i, k in enumerate(contours):
         if cv2.contourArea(k) > 100:
             shapes.append(k)
-            cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            #cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
 
     circles, crosses, fields = detectShapes(shapes)
    # printWorkflow(workFlow)
@@ -272,11 +272,11 @@ if __name__ == "__main__":
             crosses = []
             fields = []
             circles, crosses, fields = findShapes(j)
-
-            j = drawContoursOnImage(circles, j, (0, 0, 128))
-            j = drawContoursOnImage(crosses, j, (256, 0, 0))
-            j = drawContoursOnImage(fields, j, (256, 256, 0))
-            plt.imshow(j, cmap="Greys_r")
+            if len(fields) > 0:
+                j = drawContoursOnImage(circles, j, (0, 0, 128))
+                j = drawContoursOnImage(crosses, j, (256, 0, 0))
+                j = drawContoursOnImage(fields, j, (256, 256, 0))
+                plt.imshow(j, cmap="Greys_r")
         # plt.show()
 
         #image = dbscan(circles, image)
