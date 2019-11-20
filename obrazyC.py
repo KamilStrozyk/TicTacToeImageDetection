@@ -15,16 +15,25 @@ import skimage.morphology as mp
 
 dir_path = 'photo/'
 
+# Do wyrzucenia: 31, 40, 41, 51, 58, 60, 61
+# TRUDNE PRZYDPAKI: 11, 21, 23, 24
+
+# path to images
+
+
 def list_image(dir_path):
     photoList = []
     for i in range(1, 61):
+        # for i in range(1, 62):
         photoList.append(str(i) + '.jpg')
-
+    # print(photoList)
+    # return [os.path.join(dir_path, file) for file in ['1.jpg']]
     return [os.path.join(dir_path, file) for file in photoList]
 
 
 # read images
 def input_data(imagePath):
+    # return data.imread(imagePath,as_gray=True)
     return cv2.imread(imagePath, cv2.IMREAD_COLOR)
 
 
@@ -49,42 +58,77 @@ def gamma_correction(img, correction):
     return np.uint8(img*255)
 
 
+def cannyWorkflowTransition(workFlow):
+    workFlowContours = cv2.GaussianBlur(workFlow, (5, 5), 0)
+    workFlowContours = cv2.GaussianBlur(workFlow, (5, 5), 0)
+    workFlowContours = cv2.Canny(workFlowContours, 0, 255)
+    workFlowContours = cv2.bitwise_not(workFlowContours)
+    workFlowContours = cv2.erode(workFlowContours, (5, 5), iterations=2)
+
+    return workFlowContours
+
+
 def findShapes(image):
     workFlow = reduction_of_color(image)
-    # printWorkflow(workFlow)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # printWorkflow(workFlow)
+    workFlowContours = cannyWorkflowTransition(workFlow)
     ret, workFlow = cv2.threshold(
         workFlow, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    # printWorkflow(workFlow)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     cv2.morphologyEx(workFlow, cv2.MORPH_CLOSE, kernel)
     # printWorkflow(workFlow)
-    contours, hierarchy = cv2.findContours(
-        workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
     shapes = []
-
+    contours = []
+    hierarchy = []
+    contours, hierarchy = cv2.findContours(
+        workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     for i, k in enumerate(contours):
         if cv2.contourArea(k) > 100:
             shapes.append(k)
-            #cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
-
-    circles, crosses, fields = detectShapes(shapes)
+            # cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            # printWorkflow(image)
+    circlesF, crossesF, fieldsF = detectShapes(shapes)
    # printWorkflow(workFlow)
-    return circles, crosses, fields
+
+    workFlow = cv2.bitwise_and(workFlow, workFlowContours)
+    shapes2 = []
+    contours2 = []
+    hierarchy2 = []
+    contours2, hierarchy2 = cv2.findContours(
+        workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    for i, k in enumerate(contours):
+        if cv2.contourArea(k) > 100:
+            shapes2.append(k)
+            # cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            # printWorkflow(image)
+    circlesS, crossesS, fieldsS = detectShapes(shapes2)
+   # printWorkflow(workFlow)
+    
+    # return circlesF, crossesF, fieldsF
+
+    if len(circlesF) + len(crossesF) + len(fieldsF) > len(circlesS) + len(crossesS) + len(fieldsS):
+        if len(fieldsF) > 0:
+            return circlesF, crossesF, fieldsF
+        else:
+            return circlesS, crossesS, fieldsS
+    else:
+        if len(fieldsS) > 0:
+            return circlesS, crossesS, fieldsS
+        else:
+            return circlesF, crossesF, fieldsF
 
 
 def prepareSamples():
 
     path = ['circle.jpg', 'circle1.jpg',
-            'cross3.jpg', 'cross4.jpg', 'field2.jpg', 'field3.jpg', 'field4.jpg', ]
+            'cross3.jpg', 'cross4.jpg', 'field5.jpg', 'field3.jpg', 'field4.jpg']
     sampleNames = ['circle', 'circle',  'cross',
                    'cross',  'field',  'field',  'field']
     sampleContours = []
 
     for i in range(0, len(path)):
-        img = cv2.imread('samples/'+path[i], 0)
+        img = cv2.imread('Csamples/'+path[i], 0)
         ret, thresh = cv2.threshold(img, 127, 255, 0)
         contours, hierarchy = cv2.findContours(thresh, 2, 1)
         sampleContours.append(contours[0])
@@ -105,7 +149,7 @@ def detectShapes(conturs):
     sampleContours, sampleNames = prepareSamples()
     x = 0
     for c in conturs:
-        bestRet = 10000
+        bestRet = 4500000
         bestShape = "none"
         for i in range(0, len(sampleContours)):
             ret = cv2.matchShapes(c, sampleContours[i], 1, 0.0)
@@ -198,7 +242,7 @@ def imagePart(image, coordinates):
             partList.append(image[coord[2]: coord[3], coord[0]: coord[1]])
 
     plt.imshow(image, cmap="Greys_r")
-    #plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
+    # plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
     j = 0
     for item in partList:
         # printWorkflow(item)
@@ -244,8 +288,11 @@ if __name__ == "__main__":
         image = cv2.resize(
             image, (int(image.shape[1]/4), int(image.shape[0]/4)))
 
+        # MJfindGroups(image)  # Najpierw ta funkcja!
 
+        # image, circles, crosses, fields = findShapes(image)
 
+        # print(len(circles))
         for j in MJfindGroups(image):
             circles = []
             crosses = []
@@ -253,13 +300,14 @@ if __name__ == "__main__":
             circles, crosses, fields = findShapes(j)
             if len(fields) > 0:
                 j = drawContoursOnImage(circles, j, (0, 0, 128))
-                j = drawContoursOnImage(crosses, j, (256, 0, 0))
-                j = drawContoursOnImage(fields, j, (256, 256, 0))
+                j = drawContoursOnImage(crosses, j, (255, 0, 0))
+                j = drawContoursOnImage(fields, j, (255, 255, 0))
                 plt.imshow(j, cmap="Greys_r")
         # plt.show()
 
+        # image = dbscan(circles, image)
         plt.imshow(image, cmap="Greys_r")
         plt.imshow(image, cmap="Greys_r")
         plt.axis("off")
-        plt.savefig("test/test"+str(i)+".jpg", bbox_inches="tight")
+        plt.savefig("Csampletest/test"+str(i)+".jpg", bbox_inches="tight")
         #plt.show()
