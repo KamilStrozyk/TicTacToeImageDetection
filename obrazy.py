@@ -190,7 +190,7 @@ def MJfindGroups(image):
     workFlow = workFlow*255
     workFlow = workFlow.astype(np.uint8)
     ret, workFlow = cv2.threshold(workFlow, 160, 255, cv2.THRESH_BINARY)
-    # printWorkflow(workFlow)
+    printWorkflow(workFlow)
     # Taking a matrix of size 5 as the kernel
     kX = 6
     kY = 6
@@ -219,15 +219,15 @@ def imagePart(image, coordinates):
         if abs(coord[3]-coord[2]) > 40 and abs(coord[1] - coord[0]) > 40:
             partList.append(image[coord[2]: coord[3], coord[0]: coord[1]])
 
-    plt.imshow(image, cmap="Greys_r")
-    plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
-    j = 0
-    for item in partList:
-        # printWorkflow(item)
-        plt.imshow(item, cmap="Greys_r")
-        plt.savefig("pho/test" + str(i+1) + "sub" +
-                    str(j) + ".jpg", bbox_inches="tight")
-        j = j + 1
+    # plt.imshow(image, cmap="Greys_r")
+    # plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
+    # j = 0
+    # for item in partList:
+    #     # printWorkflow(item)
+    #     plt.imshow(item, cmap="Greys_r")
+    #     plt.savefig("pho/test" + str(i+1) + "sub" +
+    #                 str(j) + ".jpg", bbox_inches="tight")
+    #     j = j + 1
     return partList
 
 # MJ
