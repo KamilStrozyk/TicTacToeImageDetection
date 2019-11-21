@@ -58,44 +58,30 @@ def gamma_correction(img, correction):
 
 
 def findShapes(image):
-    # workFlow = reduction_of_color(image)
-    # workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # workFlow = cv2.GaussianBlur(workFlow, (9, 9), 0)
-    # workFlow = workFlow*255
-    # workFlow = workFlow.astype(np.uint8)
-    # ret, workFlow = cv2.threshold(workFlow, 150, 255, cv2.THRESH_BINARY)
-
     workFlow = reduction_of_color(image)
     # printWorkflow(workFlow)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # printWorkflow(workFlow)
-
     ret, workFlow = cv2.threshold(
         workFlow, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     # printWorkflow(workFlow)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     cv2.morphologyEx(workFlow, cv2.MORPH_CLOSE, kernel)
     # printWorkflow(workFlow)
-    # #printWorkflow(workFlow)
-    # im2,
-   # for i in range(0,5):
-    #  workFlow = mp.erosion(workFlow)
     contours, hierarchy = cv2.findContours(
         workFlow, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-    circles = []
-    crosses = []
-    fields = []
-    f = 0
+    shapes = []
+
     for i, k in enumerate(contours):
         if cv2.contourArea(k) > 50:
-            circles.append(k)
-            #cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
+            shapes.append(k)
+            cv2.drawContours(image, [k], 0, (0, 255, 0), 1)
 
-    circles, crosses, fields = detectShapes(circles)
+    circles, crosses, fields = detectShapes(shapes)
     return circles, crosses, fields
 
-   # #printWorkflow(image)
+   # printWorkflow(image)
 
 
 def detectShapes(conturs):
@@ -113,14 +99,13 @@ def detectShapes(conturs):
         hull = cv2.convexHull(c)
         hull_area = cv2.contourArea(hull)
         solidity = float(area)/hull_area
-        #
         # print(solidity)
         if solidity > 0.8 and solidity < 1:
-            if abs(area - median) < 0.5 * median:
-                circles.append(c)
-        elif solidity > 0.25:  # and solidity <= 0.5:
+           # if abs(area - median) < 0.5 * median:
+            circles.append(c)
+        else:#elif solidity > 0.25:  # and solidity <= 0.5:
             # and  area > 2*sum(areas) / areas.size:
-            if area < 1.2*sum(areas) / areas.size:
+            if area < sum(areas) / areas.size:
                 crosses.append(c)
             else:
                 fields.append(c)
@@ -128,42 +113,9 @@ def detectShapes(conturs):
     return circles, crosses, fields
 
 
-def drawContoursOnImage(circles, image, cntColor):
-    ones = []
-    centroids = []
-    for i, circles in enumerate(circles):
-        moments = cv2.moments(circles)
-        centerX = int(moments['m10'] / moments['m00'])
-        centerY = int(moments['m01'] / moments['m00'])
-
-        element = {}
-        element['id'] = i
-        element['centroid'] = [centerX, centerY]
-        element['area'] = cv2.contourArea(circles)
-        element['radius'] = getRadius(circles, [centerX, centerY])
-        element['contour'] = circles
-        centroids.append(element)
-
-    # print(centroids)
-
-    for c in centroids:
-        ones.append(c)
-        cv2.drawContours(image, [c['contour']], 0, cntColor, 2)
-
-        # # finding the closest neighbour:
-        # else:
-        #     min = getCentroidsDistance(c['centroid'], neigbours[0]['centroid'])
-        #     for n in neigbours:
-        #         if min > getCentroidsDistance(c['centroid'], n['centroid']):
-        #             min = getCentroidsDistance(c['centroid'], n['centroid'])
-
-        # elif len(neigbours) == 1:
-        #     twos.append(c)
-        #     cv2.drawContours(image, [c['contour']], 0, (1, 0, 0), 2)
-        # elif len(neigbours) == 7:
-        #     twos.append(c)
-        #     cv2.drawContours(image, [c['contour']], 0, (0, 0, 1), 2)
-
+def drawContoursOnImage(contours, image, cntColor):
+    for i, k in enumerate(contours):
+        cv2.drawContours(image, [k], 0, cntColor, 1)
     return image
 
 
@@ -185,6 +137,8 @@ def printWorkflow(workFlow):
     plt.show()
 
 # MJ
+
+
 def MJfindGroups(image):
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     workFlow = workFlow*255
@@ -213,25 +167,29 @@ def MJfindGroups(image):
 
     return partList
 # MJ
+
+
 def imagePart(image, coordinates):
     partList = []
     for coord in coordinates:
         if abs(coord[3]-coord[2]) > 40 and abs(coord[1] - coord[0]) > 40:
             partList.append(image[coord[2]: coord[3], coord[0]: coord[1]])
 
-    # plt.imshow(image, cmap="Greys_r")
-    # plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
-    # j = 0
-    # for item in partList:
-    #     # printWorkflow(item)
-    #     plt.imshow(item, cmap="Greys_r")
-    #     plt.savefig("pho/test" + str(i+1) + "sub" +
-    #                 str(j) + ".jpg", bbox_inches="tight")
-    #     j = j + 1
+    plt.imshow(image, cmap="Greys_r")
+    #plt.savefig("pho/test" + str(i+1) + ".jpg", bbox_inches="tight")
+    j = 0
+    for item in partList:
+        # printWorkflow(item)
+        plt.imshow(item, cmap="Greys_r")
+        # plt.savefig("pho/test" + str(i+1) + "sub" +
+        # str(j) + ".jpg", bbox_inches="tight")
+        j = j + 1
     return partList
 
 # MJ
 # [[],[],[]...], [x,y]
+
+
 def boardArea(contours, size):
     contoursNode = []
 
@@ -264,13 +222,13 @@ if __name__ == "__main__":
         image = cv2.resize(
             image, (int(image.shape[1]/4), int(image.shape[0]/4)))
 
-        #MJfindGroups(image)  # Najpierw ta funkcja!
+        # MJfindGroups(image)  # Najpierw ta funkcja!
 
         #image, circles, crosses, fields = findShapes(image)
         circles = []
         crosses = []
         fields = []
-        #print(len(circles))
+        # print(len(circles))
         for j in MJfindGroups(image):
             circles, crosses, fields = findShapes(j)
 
