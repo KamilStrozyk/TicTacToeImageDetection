@@ -17,7 +17,7 @@ dir_path = 'photo/'
 
 def list_image(dir_path):
     photoList = []
-    for i in range(1, 61):
+    for i in range(61, 75):
         photoList.append(str(i) + '.jpg')
 
     return [os.path.join(dir_path, file) for file in photoList]
@@ -261,5 +261,5 @@ if __name__ == "__main__":
         plt.imshow(image, cmap="Greys_r")
         plt.imshow(image, cmap="Greys_r")
         plt.axis("off")
-        plt.savefig("test/test"+str(i)+".jpg", bbox_inches="tight")
+        plt.savefig("sampletest/"+str(i)+".jpg", bbox_inches="tight")
         #plt.show()

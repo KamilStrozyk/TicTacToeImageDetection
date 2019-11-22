@@ -23,11 +23,11 @@ dir_path = 'photo/'
 
 def list_image(dir_path):
     photoList = []
-    for i in range(1, 61):
-        # for i in range(1, 62):
+    #goodPhoto = [61,62,63,64,65,66,67,68,69,70,72]
+    for i in range(0, 76):
+        #if i in goodPhoto:
+            #continue
         photoList.append(str(i) + '.jpg')
-    # print(photoList)
-    # return [os.path.join(dir_path, file) for file in ['1.jpg']]
     return [os.path.join(dir_path, file) for file in photoList]
 
 
@@ -36,30 +36,7 @@ def input_data(imagePath):
     # return data.imread(imagePath,as_gray=True)
     return cv2.imread(imagePath, cv2.IMREAD_COLOR)
 
-
-def reduction_of_color(image):
-    image_data = image / 255.0
-
-    image_data = image_data.reshape((-1, 3))
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.25)
-    flags = cv2.KMEANS_RANDOM_CENTERS
-    image_data = image_data.astype(np.float32)
-    compactness, labels, centers = cv2.kmeans(
-        image_data, 3, None, criteria, 20, flags)
-    new_colors = centers[labels].reshape((-1, 3))
-    image_recolored = new_colors.reshape(image.shape)
-
-    return image_recolored
-
-
-def gamma_correction(img, correction):
-    img = img/255.0
-    img = cv2.pow(img, correction)
-    return np.uint8(img*255)
-
-
 def cannyWorkflowTransition(workFlow):
-    workFlowContours = cv2.GaussianBlur(workFlow, (5, 5), 0)
     workFlowContours = cv2.GaussianBlur(workFlow, (5, 5), 0)
     workFlowContours = cv2.Canny(workFlowContours, 0, 255)
     workFlowContours = cv2.bitwise_not(workFlowContours)
@@ -69,7 +46,6 @@ def cannyWorkflowTransition(workFlow):
 
 
 def findShapes(image):
-    workFlow = reduction_of_color(image)
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     workFlowContours = cannyWorkflowTransition(workFlow)
     ret, workFlow = cv2.threshold(
@@ -183,28 +159,12 @@ def drawContoursOnImage(contours, image, cntColor):
         cv2.drawContours(image, [k], 0, cntColor, 1)
     return image
 
-
-def getRadius(circles, cetroid):
-    distances = []
-    for i in circles:
-        pointX = i[0][0]
-        pointY = i[0][1]
-
-        distances = np.append(distances, dist.euclidean(
-            (cetroid[0], cetroid[1]), (pointX, pointY)))
-
-    return np.mean(distances)
-
-
 def printWorkflow(workFlow):
     plt.figure()
     io.imshow(workFlow)
     plt.show()
 
-
 # MJ
-
-
 def MJfindGroups(image):
     workFlow = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     workFlow = workFlow*255
@@ -233,8 +193,6 @@ def MJfindGroups(image):
 
     return partList
 # MJ
-
-
 def imagePart(image, coordinates):
     partList = []
     for coord in coordinates:
@@ -254,8 +212,6 @@ def imagePart(image, coordinates):
 
 # MJ
 # [[],[],[]...], [x,y]
-
-
 def boardArea(contours, size):
     contoursNode = []
 
@@ -302,12 +258,11 @@ if __name__ == "__main__":
                 j = drawContoursOnImage(circles, j, (0, 0, 128))
                 j = drawContoursOnImage(crosses, j, (255, 0, 0))
                 j = drawContoursOnImage(fields, j, (255, 255, 0))
-                plt.imshow(j, cmap="Greys_r")
+                plt.imshow(j)
         # plt.show()
 
         # image = dbscan(circles, image)
-        plt.imshow(image, cmap="Greys_r")
-        plt.imshow(image, cmap="Greys_r")
+        plt.imshow(image)
         plt.axis("off")
         plt.savefig("Csampletest/test"+str(i)+".jpg", bbox_inches="tight")
         #plt.show()
